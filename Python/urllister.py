@@ -27,7 +27,7 @@ if __name__ == "__main__":
 	
 	httplib.HTTPConnection.debuglevel = 0
 	url = "https://www.digitalocean.com/"
-	req = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"}) 
+	req = urllib2.Request(url, headers={'User-Agent' : "Tharak Krishnan's Browser"}) 
 	usock = urllib2.urlopen(req)
 	parser = URLLister()
 	try:

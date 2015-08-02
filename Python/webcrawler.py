@@ -16,17 +16,21 @@ from sets import Set
 class WebCrawler():
 	""" Web crawler class crawls a specific website
 	"""
-	def __init__(self, url="https://www.digitalocean.com", max_level=1000):
+	def __init__(self, url="https://www.digitalocean.com", max_level=1000, debug=0):
 		self.url=url
-		self.siteMap = {url:""}
+		self.siteMap = {self.url:""}
 		self.level = 0
 		self.MaxLevel = max_level
-		self.crawled=Set([]);
+		self.crawled=Set([])
+		self.debug=debug
 
 	
 	def __crawl_site(self, url_key=""):
 		"""Recursively crawls the url passed and populates the sitemap datastructure
 		"""
+		
+		if self.level > self.MaxLevel: 
+			return
 		
 		if url_key=="":
 			url=self.url
@@ -46,49 +50,62 @@ class WebCrawler():
 				self.siteMap[key] = urls
 
 				for url_key in urls:
-					print "url_key: %s, crawled: %s"%(url_key,self.crawled)
+					if (self.debug > 1): print "url_key: %s, crawled: %s"%(url_key,self.crawled)
 					if url_key in self.crawled:
 						continue
-					if url_key == '#':
+					if url_key.startswith("#"):
 						continue
 					
 					import tldextract
 					ext = tldextract.extract(url_key)
-					#print ext
+					if (self.debug > 1): print ext
 					if ext.domain == "":
 						temp_url = "%s%s"%(self.url,url_key)
-						print "\nLevel=%s,URL=%s\n"%(self.level, temp_url)
+						if (self.debug > 0): print "\nLevel=%s,URL=%s\n"%(self.level, temp_url)
 						self.siteMap[url_key] = ""
 						self.crawled.add(url_key)
 						self.level = self.level+1
-						if(self.level < self.MaxLevel):
-							self.__crawl_site(url_key)
-						else:
-							return
+						self.__crawl_site(url_key)
 						self.level = self.level-1
 
 						
 
-						
+	def __get_prefix(self, address):
+		if address.startswith("http"):
+			prefix=""
+		elif address.startswith("#"):
+			prefix=self.url+"/"
+		else:
+			prefix = self.url
+		return prefix					
 
 	def __print_siteMap(self):
 		"""Prints the siteMap datastructure in an XML like format
 		"""
-		print self.siteMap
+
+		#Dump Sitemap to an XML file
 		try:                                
 			fsock = open("site.xml", "w") 
 			try:                           
 				fsock.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+				fsock.write("<WEBSITE>\n")
 				for key in self.siteMap:
-					fsock.write("\t<URL>\n")
-					fsock.write("\t\t<WEBPAGE>%s</WEBPAGE>\n"%(key))
+					prefix = self.__get_prefix(key)
+					fsock.write("\t<WEBPAGE>\n")
+					fsock.write("\t\t<ADDRESS>\"%s\"</ADDRESS>\n"%(prefix+key))
 					for loc in self.siteMap[key]:
-						fsock.write("\t\t<LINK>%s</LINK>\n"%(loc))
-					fsock.write("\t</URL>\n")
+						prefix = self.__get_prefix(loc)
+						fsock.write("\t\t<LINK>\"%s\"</LINK>\n"%(prefix+loc))
+					fsock.write("\t</WEBPAGE>\n")
+				fsock.write("</WEBSITE>\n")
 			finally:                        
 				fsock.close()                    			  
 		except IOError:                     
-			pass        
+			pass    
+		#Dump siteMap to a json file
+		import json
+		with open('site.json', 'w') as fp:
+			json.dump(self.siteMap, fp, indent=4)    
 			
 			
 				
@@ -116,15 +133,17 @@ class WebCrawler():
 				parser.feed(usock.read())
 				parser.close()
 			except SGMLParseError:
+				if (self.debug > 0): print "SGMLParseError: Unable to parse web page." 
 				pass
 			usock.close()
 			return parser.urls
 		except urllib2.HTTPError, urllib2.URLError:
+			if (self.debug > 0): print "HTTPError or URLError: Page does not exist or Malformed web address." 
 			return []
 		
 
 
 if __name__ == "__main__":
-	wc=WebCrawler(url="http://digitalocean.com/", max_level=5);
+	wc=WebCrawler(url="http://digitalocean.com", max_level=2, debug=1);
 	wc.get_siteMap()
 	
