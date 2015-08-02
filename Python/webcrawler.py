@@ -37,7 +37,7 @@ class WebCrawler():
 		else:
 			url=self.url+url_key
 			
-		if(debug > 0): print "url to crawl:%s"%url
+		if(self.debug > 0): print "url to crawl:%s"%url
 		
 		url_list=[]
 		
@@ -58,10 +58,10 @@ class WebCrawler():
 					
 					import tldextract				#We do not want to crawl external domains. tldextract will allow us to check for external domain.
 					ext = tldextract.extract(url_key)
-					if (self.debug > 1): print ext
-					if ext.domain == "":			#If ext.domain is empty then the page is part of local domain and needs to be crawled.    
+					if (self.debug > 1): print ext.domain
+					if (ext.domain == "") or (ext.domain == "digitalocean.com"):			#If ext.domain is empty or is digitalocean.com then the page is part of local domain and needs to be crawled.    
 						temp_url = "%s%s"%(self.url,url_key)
-						if (self.debug > 0): print "\nLevel=%s,URL=%s\n"%(self.level, temp_url)
+						if (self.debug > 1): print "\nLevel=%s,URL=%s\n"%(self.level, temp_url)
 						self.siteMap[url_key] = ""  #Add webpage to siteMap before crawling to allow it be crawled.
 						self.crawled.add(url_key)   #Update the crawled set to indicate that this website has been crawled ( will prevent us from being stuck in a loop)
 						self.level = self.level+1   #Increment depth count
@@ -135,17 +135,19 @@ class WebCrawler():
 				parser.feed(usock.read())
 				parser.close()
 			except SGMLParseError:
-				if (self.debug > 0): print "SGMLParseError: Unable to parse web page." 
+				if (self.debug > 0): 
+					print "SGMLParseError: Unable to parse web page." 
 				pass
 			usock.close()
 			return parser.urls
-		except urllib2.HTTPError, urllib2.URLError:
-			if (self.debug > 0): print "HTTPError or URLError: Page does not exist or Malformed web address." 
+		except:
+			if (self.debug > 0): 
+				print "HTTPError or URLError: Page does not exist or Malformed web address." 
 			return []
 		
 
 
 if __name__ == "__main__":
-	wc=WebCrawler(url="http://digitalocean.com", max_level=2, debug=1);
+	wc=WebCrawler(url="http://digitalocean.com", debug=1);
 	wc.get_siteMap()
 	
