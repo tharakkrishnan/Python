@@ -17,60 +17,62 @@ class WebCrawler():
 	""" Web crawler class crawls a specific website
 	"""
 	def __init__(self, url="https://www.digitalocean.com", max_level=1000, debug=0):
-		self.url=url
-		self.siteMap = {self.url:""}
-		self.level = 0
-		self.MaxLevel = max_level
-		self.crawled=Set([])
-		self.debug=debug
+		self.url=url					#URL of the website to crawled
+		self.siteMap = {self.url:""}	#Datastructure storing the URL and links found in crawled webpages
+		self.level = 0					#variable counting the crawl depth
+		self.MaxLevel = max_level		#Maximum allowed crawl depth allowed by the User
+		self.crawled=Set([])			#A Set datastructure containing previously crawled sites to avoid repetition
+		self.debug=debug				#Debug flag allowing user to control debug messages on the console
 
 	
 	def __crawl_site(self, url_key=""):
 		"""Recursively crawls the url passed and populates the sitemap datastructure
 		"""
 		
-		if self.level > self.MaxLevel: 
+		if self.level > self.MaxLevel: 	#Do not continue crawling if we are at maximum allowed depth
 			return
 		
-		if url_key=="":
-			url=self.url
+		if url_key=="":    				#This variable contains the postfix that needs to be appended to the domain name
+			url=self.url				#in order to crawl a webpage
 		else:
 			url=self.url+url_key
 			
-		print "url to crawl:%s"%url
+		if(debug > 0): print "url to crawl:%s"%url
 		
 		url_list=[]
 		
-		for key in self.siteMap:
-		 	url_list.append(key)
+		for key in self.siteMap:		#When we cycle through the siteMap datastructure we convert to a url_list
+		 	url_list.append(key)		#Otherwise, the interpreter complains that dictionary is constantly changing 
 		
-		for key in url_list:
+		for key in url_list:			#Fetch the URLs in the webpage and append to siteMap for URLs that have not yet been crawled. 
 			if self.siteMap[key] == "":
 				urls =self.__extract_url(url)
 				self.siteMap[key] = urls
 
-				for url_key in urls:
+				for url_key in urls:	#If the URL has already been crawled or has a # tag, dont crawl it.
 					if (self.debug > 1): print "url_key: %s, crawled: %s"%(url_key,self.crawled)
 					if url_key in self.crawled:
 						continue
 					if url_key.startswith("#"):
 						continue
 					
-					import tldextract
+					import tldextract				#We do not want to crawl external domains. tldextract will allow us to check for external domain.
 					ext = tldextract.extract(url_key)
 					if (self.debug > 1): print ext
-					if ext.domain == "":
+					if ext.domain == "":			#If ext.domain is empty then the page is part of local domain and needs to be crawled.    
 						temp_url = "%s%s"%(self.url,url_key)
 						if (self.debug > 0): print "\nLevel=%s,URL=%s\n"%(self.level, temp_url)
-						self.siteMap[url_key] = ""
-						self.crawled.add(url_key)
-						self.level = self.level+1
-						self.__crawl_site(url_key)
-						self.level = self.level-1
+						self.siteMap[url_key] = ""  #Add webpage to siteMap before crawling to allow it be crawled.
+						self.crawled.add(url_key)   #Update the crawled set to indicate that this website has been crawled ( will prevent us from being stuck in a loop)
+						self.level = self.level+1   #Increment depth count
+						self.__crawl_site(url_key)	
+						self.level = self.level-1	#Decrement depth count once the page and all its children have been crawled
 
 						
 
 	def __get_prefix(self, address):
+		"""Will add the domain name prefix to a url key if necessary
+		"""
 		if address.startswith("http"):
 			prefix=""
 		elif address.startswith("#"):
@@ -124,7 +126,7 @@ class WebCrawler():
 		from urllister import URLLister
 		from sgmllib import SGMLParseError
 		
-		req = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"}) 
+		req = urllib2.Request(url, headers={'User-Agent' : "Tharak Krishnan's Browser"}) 
 		try:
 			usock = urllib2.urlopen(req)
 			parser = URLLister()
