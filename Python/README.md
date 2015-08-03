@@ -8,3 +8,7 @@
 - showing which static assets each page depends on, and the links between pages.
   Choose the most appropriate data structure to store & display this site map.
 
+##TODO
+- Add unit tests
+--To check url parsing
+
