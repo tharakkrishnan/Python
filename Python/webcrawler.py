@@ -79,19 +79,7 @@ class WebCrawler():
 						self.level = self.level+1   #Increment depth count
 						self.__crawl_site(url_key)	
 						self.level = self.level-1	#Decrement depth count once the page and all its children have been crawled
-
-						
-
-	def __get_prefix(self, address):
-		"""Will add the domain name prefix to a url key if necessary
-		"""
-		if address.startswith("http"):
-			prefix=""
-		elif address.startswith("#"):
-			prefix=self.url+"/"
-		else:
-			prefix = self.url
-		return prefix					
+			
 
 	def __print_siteMap(self):
 		"""Prints the siteMap datastructure in an XML like format
