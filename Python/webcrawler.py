@@ -115,7 +115,7 @@ class WebCrawler():
 			pass    
 		#Dump siteMap to a json file
 		import json
-		with open('site.json', 'w') as fp:
+		with open(self.outdir+'site.json', 'w') as fp:
 			json.dump(self.siteMap, fp, indent=4)    
 					
 	def get_siteMap(self):
