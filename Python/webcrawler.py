@@ -16,28 +16,45 @@ from sets import Set
 class WebCrawler():
 	""" Web crawler class crawls a specific website
 	"""
-	def __init__(self, url="https://www.digitalocean.com", max_level=1000, debug=0):
+	def __init__(self, url="https://www.digitalocean.com", outdir="out", max_level=1000, debug=0):
 		self.url=url					#URL of the website to crawled
 		self.siteMap = {self.url:""}	#Datastructure storing the URL and links found in crawled webpages
+		self.outdir=outdir.rstrip("/")+"/"	#Output Directory
 		self.level = 0					#variable counting the crawl depth
 		self.MaxLevel = max_level		#Maximum allowed crawl depth allowed by the User
 		self.crawled=Set([])			#A Set datastructure containing previously crawled sites to avoid repetition
 		self.debug=debug				#Debug flag allowing user to control debug messages on the console
-
-	
+		self.domains=Set([''])
+		
+		from os import path, makedirs
+		if not path.exists(self.outdir): 
+			makedirs(self.outdir)
+			
+	def __absolutify(self, url):
+		"""Converts a relative url path into an absolute one
+		""" 
+		from urlparse import urlparse
+			
+		url_parts = urlparse(url)
+		domain_url_parts = urlparse(self.url)
+		if not url_parts.netloc:
+			return domain_url_parts.scheme +"://"+ domain_url_parts.netloc.rstrip("/")+"/"+url.lstrip("/")
+		else:
+			return url
+		
 	def __crawl_site(self, url_key=""):
 		"""Recursively crawls the url passed and populates the sitemap datastructure
 		"""
-		
+
 		if self.level > self.MaxLevel: 	#Do not continue crawling if we are at maximum allowed depth
 			return
 		
 		if url_key=="":    				#This variable contains the postfix that needs to be appended to the domain name
-			url=self.url				#in order to crawl a webpage
+			url=self.__absolutify(self.url)				#in order to crawl a webpage
 		else:
-			url=self.url+url_key
+			url=self.__absolutify(url_key)
 			
-		if(self.debug > 0): print "url to crawl:%s"%url
+		if(self.debug > 0): print "Now crawling: %s"%(url)
 		
 		url_list=[]
 		
@@ -50,18 +67,28 @@ class WebCrawler():
 				self.siteMap[key] = urls
 
 				for url_key in urls:	#If the URL has already been crawled or has a # tag, dont crawl it.
-					if (self.debug > 1): print "url_key: %s, crawled: %s"%(url_key,self.crawled)
+					if (self.debug > 1): 
+						print "url_key: %s, crawled: %s"%(url_key,self.crawled)
 					if url_key in self.crawled:
 						continue
 					if url_key.startswith("#"):
 						continue
 					
-					import tldextract				#We do not want to crawl external domains. tldextract will allow us to check for external domain.
-					ext = tldextract.extract(url_key)
-					if (self.debug > 1): print ext.domain
-					if (ext.domain == "") or (ext.domain == "digitalocean.com"):			#If ext.domain is empty or is digitalocean.com then the page is part of local domain and needs to be crawled.    
-						temp_url = "%s%s"%(self.url,url_key)
-						if (self.debug > 1): print "\nLevel=%s,URL=%s\n"%(self.level, temp_url)
+					#We do not want to crawl external domains. 
+					from urlparse import urlparse
+					parsed = urlparse(url_key)
+					if (self.debug > 1): 
+						print parsed.netloc
+					if parsed.netloc in self.url: 
+						self.domains.add(parsed.netloc)
+						
+					if (self.debug > 1):
+						print self.domains
+					
+					if parsed.netloc in self.domains:		#If netloc is empty or is digitalocean.com then the page is part of local domain and needs to be crawled.    
+						temp_url = self.__absolutify(url_key)
+						if (self.debug > 1): 
+							print "\nLevel=%s,URL=%s\n"%(self.level, temp_url)
 						self.siteMap[url_key] = ""  #Add webpage to siteMap before crawling to allow it be crawled.
 						self.crawled.add(url_key)   #Update the crawled set to indicate that this website has been crawled ( will prevent us from being stuck in a loop)
 						self.level = self.level+1   #Increment depth count
@@ -84,33 +111,28 @@ class WebCrawler():
 	def __print_siteMap(self):
 		"""Prints the siteMap datastructure in an XML like format
 		"""
-
 		#Dump Sitemap to an XML file
 		try:                                
-			fsock = open("site.xml", "w") 
+			fd = open(self.outdir+"site.xml", "w") 
 			try:                           
-				fsock.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-				fsock.write("<WEBSITE>\n")
+				fd.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+				fd.write("<WEBSITE>\n")
 				for key in self.siteMap:
-					prefix = self.__get_prefix(key)
-					fsock.write("\t<WEBPAGE>\n")
-					fsock.write("\t\t<ADDRESS>\"%s\"</ADDRESS>\n"%(prefix+key))
+					fd.write("\t<WEBPAGE>\n")
+					fd.write("\t\t<ADDRESS>\"%s\"</ADDRESS>\n"%(self.__absolutify(key)))
 					for loc in self.siteMap[key]:
-						prefix = self.__get_prefix(loc)
-						fsock.write("\t\t<LINK>\"%s\"</LINK>\n"%(prefix+loc))
-					fsock.write("\t</WEBPAGE>\n")
-				fsock.write("</WEBSITE>\n")
+						fd.write("\t\t<LINK>\"%s\"</LINK>\n"%(self.__absolutify(loc)))
+					fd.write("\t</WEBPAGE>\n")
+				fd.write("</WEBSITE>\n")
 			finally:                        
-				fsock.close()                    			  
+				fd.close()                    			  
 		except IOError:                     
 			pass    
 		#Dump siteMap to a json file
 		import json
 		with open('site.json', 'w') as fp:
 			json.dump(self.siteMap, fp, indent=4)    
-			
-			
-				
+					
 	def get_siteMap(self):
 		"""Initiates the crawler and populates the siteMap
 		"""
@@ -134,20 +156,28 @@ class WebCrawler():
 			try:
 				parser.feed(usock.read())
 				parser.close()
-			except SGMLParseError:
+			except Exception as exception:
 				if (self.debug > 0): 
-					print "SGMLParseError: Unable to parse web page." 
+					print "sgmllib: Unable to parse web page.\n sgmllib: Raised exception %s"%(type(exception).__name__)
+					fd = open(self.outdir+"%s.err"%type(exception).__name__, "a")
+					fd.write( "%s\n"%(url))	
+					fd.close()
 				pass
 			usock.close()
 			return parser.urls
-		except:
+		except (KeyboardInterrupt, SystemExit):
+			raise
+		except Exception as exception:
 			if (self.debug > 0): 
-				print "HTTPError or URLError: Page does not exist or Malformed web address." 
+				print "urllib2: Page does not exist or Malformed web address.\n sgmllib: Raised exception %s"%(type(exception).__name__) 
+				fd = open(self.outdir+"%s.err"%type(exception).__name__, "a")
+				fd.write( "%s\n"%(url))	
+				fd.close()
 			return []
 		
 
 
 if __name__ == "__main__":
-	wc=WebCrawler(url="http://digitalocean.com", debug=1);
+	wc=WebCrawler(url="http://digitalocean.com", outdir="out",debug=1);
 	wc.get_siteMap()
 	
