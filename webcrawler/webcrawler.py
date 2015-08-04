@@ -16,8 +16,9 @@ from sets import Set
 from urlparse import urlparse
 from reppy.cache import RobotsCache
 
-TESTURL="file:///Users/tharak/Dropbox/code/Python/webcrawler/mock_websites/test1/example.org/index.html"
+TESTURL="http://example.com"
 USERAGENT = "Tharak Krishnan's Browser"
+OUTDIR = "./out"
 
 class WebCrawler():
 	""" Web crawler class crawls a specific website
@@ -130,10 +131,11 @@ class WebCrawler():
 	def get_siteMap(self):
 		"""Initiates the crawler and populates the siteMap
 		"""
-		from os import path, makedirs
-		
-		if not path.exists(self.outdir): 
-			makedirs(self.outdir)
+		from os import makedirs
+		from shutil	import rmtree 
+
+		rmtree(self.outdir)
+		makedirs(self.outdir)
 
 		self.__crawl_site()
 		self.__print_siteMap()
@@ -178,6 +180,6 @@ class WebCrawler():
 
 if __name__ == "__main__":
 	
-	wc=WebCrawler(url=TESTURL, useragent = USERAGENT, outdir="out",debug=1);
+	wc=WebCrawler(url=TESTURL, useragent = USERAGENT, outdir=OUTDIR,debug=1);
 	wc.get_siteMap()
 	

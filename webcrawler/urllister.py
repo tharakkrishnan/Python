@@ -12,6 +12,10 @@ __date__ = "$Date: 2015/08/01 $"
 __copyright__ = "Copyright (c) 2015 Tharak Krishnan"
 __license__ = "Python"
 
+TESTURL="http://example.com"
+USERAGENT = "Tharak Krishnan's Browser"
+
+
 from sgmllib import SGMLParser
 
 class URLLister(SGMLParser):
