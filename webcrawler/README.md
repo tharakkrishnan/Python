@@ -13,6 +13,8 @@
 ###a. reppy
     -Install using "pip install reppy" 
 ##TODO
+###Improve memory usage
+    1. Modify the sitemap data structure to be buffer tha dumps to file frequently rather than store the entire site and dumpa the end since it can grow really large
 ###Add unit tests
     1.To check url parsing
  
