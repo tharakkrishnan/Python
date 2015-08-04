@@ -54,12 +54,13 @@ class URLLister(SGMLParser):
 			if  url_parts.path.startswith("../"):
 				domain_path_list = domain_url_parts.path.strip("/").split("/")
 				domain_path_list = domain_path_list[:-1]
+				print domain_path_list
 				return domain_url_parts.scheme +"://" \
 					   + domain_url_parts.netloc.lower().rstrip("/") + \
-					   "/"+"/".join(domain_path_list).lstrip("/") +"/"+ url.lstrip("../")
+					   "/"+("/".join(domain_path_list)).strip("/") +"/"+ url.lstrip("../")
 					   
 			if  url_parts.path.startswith("./"):
-				return domain_url_parts.scheme +"://"+ domain_url_parts.netloc.lower().rstrip("/")+"/"+url.lstrip("./")
+				return domain_url_parts.scheme +"://"+ domain_url_parts.netloc.lower().rstrip("/")+"/"+domain_url_parts.path.lower().strip("/")+"/"+url.lstrip("./")
 				
 			return domain_url_parts.scheme +"://"+ domain_url_parts.netloc.lower().rstrip("/")+"/"+url.lstrip("/")
 		else:
