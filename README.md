@@ -1,2 +1,2 @@
 # Python
-## This folder contains a list of my python projects
+## This folder contains my python projects
