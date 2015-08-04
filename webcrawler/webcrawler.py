@@ -4,15 +4,15 @@
 
 Usage: python webcrawler.py [options]
 Options:
-	-h, --help \t\t\t show this help 
-	-u, --url \t\t\t set the url to crawl starting with htttp:// or file:// [default: "http://example.com"]
-	-a, --agent \t\t\t set the User Agent name [default: 'User Agent']
-	-o, --outdir \t\t\t set the output directory to dump the siteMap in XML and JSON formats [default: './out']
-	-d, --debuglevel \t\t set the verbosity of debug level while parsing [default: '1']
+	-h, --help		show this help 
+	-u, --url		set the url to crawl starting with htttp:// or file:// [default: "http://example.com"]
+	-a, --agent		set the User Agent name [default: 'User Agent']
+	-o, --outdir		set the output directory to dump the siteMap in XML and JSON formats [default: './out']
+	-d, --debuglevel	set the verbosity of debug level while parsing [default: '1']
 							0- silent; complain on Error
 							1- info
 							2- garrolous
-						 \t>2- just shut up						 
+						       >2- just shut up						 
 """
 
 __author__ = "Tharak Krishnan (tharak.krishnan@gmail.com)"
