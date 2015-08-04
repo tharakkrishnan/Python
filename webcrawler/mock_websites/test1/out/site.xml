@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WEBSITE>
+	<WEBPAGE>
+		<ADDRESS>"file:///Users/tharak/Dropbox/code/Python/webcrawler/mock_websites/test1/example.org/index.html"</ADDRESS>
+		<LINK>"http://www.iana.org/domains/example"</LINK>
+	</WEBPAGE>
+</WEBSITE>

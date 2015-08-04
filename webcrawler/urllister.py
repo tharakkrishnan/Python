@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*
-
 """Extract list of URLs in a web page
-This code is derived from a book by Mark Pilgrim at http://diveintopython.net
 
+This program derived from "Dive Into Python" by Mark Pilgrim,
+a free Python book for experienced programmers. 
+Visit http://diveintopython.org/ for the latest version.
 """
-
 __author__ = "Tharak Krishnan (tharak.krishnan@gmail.com)"
 __version__ = "$Revision: 1.0$"
 __date__ = "$Date: 2015/08/01 $"
@@ -28,15 +28,22 @@ class URLLister(SGMLParser):
 		href = [v for k, v in attrs if k=='href']
 		
 		if href:
-			self.urls.extend([self.__absolutify(k) for k in href])
+			self.urls.extend([self.__absolutify(self.url, k) for k in href])
+	
+	def absolutify(self, domain_url, url):
+		"""Converts a relative url path into an absolute one
+		Public function for testing purposes
+		""" 
+		return self.__absolutify(domain_url, url)
+	
 			
-	def __absolutify(self, url):
+	def __absolutify(self, domain_url, url):
 		"""Converts a relative url path into an absolute one
 		""" 
 		from urlparse import urlparse
 
 		url_parts = urlparse(url)
-		domain_url_parts = urlparse(self.url)
+		domain_url_parts = urlparse(domain_url)
 
 		if url_parts.netloc == '' and url_parts.scheme == '':
 			

@@ -16,10 +16,13 @@ from sets import Set
 from urlparse import urlparse
 from reppy.cache import RobotsCache
 
+TESTURL="file:///Users/tharak/Dropbox/code/Python/webcrawler/mock_websites/test1/example.org/index.html"
+USERAGENT = "Tharak Krishnan's Browser"
+
 class WebCrawler():
 	""" Web crawler class crawls a specific website
 	"""
-	def __init__(self, url="https://www.digitalocean.com", useragent="User Agent", outdir="out", max_depth=1000, debug=0):
+	def __init__(self, url="file:///Users/tharak/Dropbox/code/Python/webcrawler/mock_website/example.org/index.html", useragent="User Agent", outdir="out", max_depth=1000, debug=0):
 		self.url = url					
 		self.useragent = useragent		
 		self.siteMap = {self.url:""}	
@@ -30,11 +33,6 @@ class WebCrawler():
 		self.debug=debug				
 		self.domains=Set([urlparse(self.url).netloc.lower()])
 		self.robots = RobotsCache()
-
-		
-		from os import path, makedirs
-		if not path.exists(self.outdir): 
-			makedirs(self.outdir)
 			
 		
 	def __crawl_site(self, url_key=""):
@@ -51,10 +49,12 @@ class WebCrawler():
 			url=url_key
 			
 		#Check the site's robot.txt to figure the list of allowed locs	
-		if not self.robots.allowed(url, self.useragent):
-			if(self.debug > 0): 
-				print "Page disallowed in robots.txt %s"%(url)
-			return
+		#Do not check robots.txt if the file is located locally
+		if "http" in urlparse(url).scheme:  
+			if not self.robots.allowed(url, self.useragent):
+				if(self.debug > 0): 
+					print "Page disallowed in robots.txt %s"%(url)
+				return
 			
 		if(self.debug > 0): 
 			print "Now crawling: %s"%(url)
@@ -130,6 +130,11 @@ class WebCrawler():
 	def get_siteMap(self):
 		"""Initiates the crawler and populates the siteMap
 		"""
+		from os import path, makedirs
+		
+		if not path.exists(self.outdir): 
+			makedirs(self.outdir)
+
 		self.__crawl_site()
 		self.__print_siteMap()
 		return self.siteMap
@@ -172,6 +177,7 @@ class WebCrawler():
 
 
 if __name__ == "__main__":
-	wc=WebCrawler(url="http://digitalocean.com", useragent = "Tharak Krishnan's Browser", outdir="out",debug=1);
+	
+	wc=WebCrawler(url=TESTURL, useragent = USERAGENT, outdir="out",debug=1);
 	wc.get_siteMap()
 	
