@@ -28,6 +28,10 @@ class KnownValues(unittest.TestCase):
 
 	def testWebcrawlerKnownValues(self):
 		"""webcrawler should give known result with known input"""
+		
+		from os import makedirs
+		makedirs(OUTDIR)
+		
 		for t in self.KnownValues:
 			wc=webcrawler.WebCrawler(url=t[0], useragent = USERAGENT, outdir=OUTDIR,debug=1);
 			wc.get_siteMap()
@@ -46,8 +50,8 @@ class KnownValues(unittest.TestCase):
 				test_out_fd.close()
 				self.assertEqual(test_out, result)
 				
-				import shutil
-				shutil.rmtree(OUTDIR)
+				from shutil import rmtree
+				rmtree(OUTDIR)
 			
 if __name__ == "__main__":
 	unittest.main()

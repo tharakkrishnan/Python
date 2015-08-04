@@ -2,7 +2,17 @@
 # -*- coding: utf-8 -*
 """Crawls links on a website recursively and produces a siteMap
 
-
+Usage: python webcrawler.py [options]
+Options:
+	-h, --help \t\t\t show this help 
+	-u, --url \t\t\t set the url to crawl starting with htttp:// or file:// [default: "http://example.com"]
+	-a, --agent \t\t\t set the User Agent name [default: 'User Agent']
+	-o, --outdir \t\t\t set the output directory to dump the siteMap in XML and JSON formats [default: './out']
+	-d, --debuglevel \t\t set the verbosity of debug level while parsing [default: '1']
+							0- silent; complain on Error
+							1- info
+							2- garrolous
+						 \t>2- just shut up						 
 """
 
 __author__ = "Tharak Krishnan (tharak.krishnan@gmail.com)"
@@ -11,14 +21,11 @@ __date__ = "$Date: 2015/08/01 $"
 __copyright__ = "Copyright (c) 2015 Tharak Krishnan"
 __license__ = "Python"
 
-import re
+import re, sys, getopt
 from sets import Set
 from urlparse import urlparse
 from reppy.cache import RobotsCache
 
-TESTURL="http://example.com"
-USERAGENT = "Tharak Krishnan's Browser"
-OUTDIR = "./out"
 
 class WebCrawler():
 	""" Web crawler class crawls a specific website
@@ -176,10 +183,39 @@ class WebCrawler():
 				fd.close()
 			return []
 		
+def usage():
+    print __doc__
 
+def main(argv):
+	
+	TESTURL="http://example.com"
+	USERAGENT = "Tharak Krishnan's Browser"
+	OUTDIR = "./out"
+	_debuglevel = 1
+	try:
+		opts, args = getopt.getopt(argv, "hu:a:o:d:", ["help", "url=", "agent=", "outdir=", "debuglevel="])
+	except getopt.GetoptError:
+		usage()
+		sys.exit(2)
+	for opt, arg in opts:
+		if opt in ("-h", "--help"):
+			usage()
+			sys.exit()
+		elif opt in ("-u", "--url"):
+			TESTURL = arg
+			if not (TESTURL.startswith("http://") or TESTURL.startswith("http://")):
+				usage()
+				sys.exit()
+		elif opt in ("-a", "--agent"):
+			USERAGENT = arg
+		elif opt in ("-o", "--outdir"):
+			OUTDIR = arg
+		elif opt in ("-d", "--debuglevel"):
+			_debuglevel = int(arg)    
+
+	wc=WebCrawler(url=TESTURL, useragent = USERAGENT, outdir=OUTDIR,debug=_debuglevel);
+	wc.get_siteMap()
 
 if __name__ == "__main__":
-	
-	wc=WebCrawler(url=TESTURL, useragent = USERAGENT, outdir=OUTDIR,debug=1);
-	wc.get_siteMap()
+	main(sys.argv[1:])
 	
