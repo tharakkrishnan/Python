@@ -14,19 +14,23 @@ __license__ = "Python"
 import re
 from sets import Set
 from urlparse import urlparse
+from reppy.cache import RobotsCache
 
 class WebCrawler():
 	""" Web crawler class crawls a specific website
 	"""
-	def __init__(self, url="https://www.digitalocean.com", outdir="out", max_level=1000, debug=0):
-		self.url=url					#URL of the website to crawled
-		self.siteMap = {self.url:""}	#Datastructure storing the URL and links found in crawled webpages
-		self.outdir=outdir.rstrip("/")+"/"	#Output Directory
-		self.level = 0					#variable counting the crawl depth
-		self.MaxLevel = max_level		#Maximum allowed crawl depth allowed by the User
-		self.crawled=Set([])			#A Set datastructure containing previously crawled sites to avoid repetition
-		self.debug=debug				#Debug flag allowing user to control debug messages on the console
+	def __init__(self, url="https://www.digitalocean.com", useragent="User Agent", outdir="out", max_depth=1000, debug=0):
+		self.url = url					
+		self.useragent = useragent		
+		self.siteMap = {self.url:""}	
+		self.outdir=outdir.rstrip("/")+"/"	
+		self.depth = 0					
+		self.MaxDepth = max_depth		
+		self.crawled=Set([])			
+		self.debug=debug				
 		self.domains=Set([urlparse(self.url).netloc.lower()])
+		self.robots = RobotsCache()
+
 		
 		from os import path, makedirs
 		if not path.exists(self.outdir): 
@@ -36,28 +40,41 @@ class WebCrawler():
 	def __crawl_site(self, url_key=""):
 		"""Recursively crawls the url passed and populates the sitemap datastructure
 		"""
-
-		if self.level > self.MaxLevel: 	#Do not continue crawling if we are at maximum allowed depth
+		#Do not continue crawling if we are at maximum allowed depth
+		if self.depth > self.MaxDepth: 	
 			return
 		
-		if url_key=="":    				#This variable contains the postfix that needs to be appended to the domain name
-			url=self.url				#in order to crawl a webpage
+		
+		if url_key=="":    				
+			url=self.url				
 		else:
 			url=url_key
 			
-		if(self.debug > 0): print "Now crawling: %s"%(url)
+		#Check the site's robot.txt to figure the list of allowed locs	
+		if not self.robots.allowed(url, self.useragent):
+			if(self.debug > 0): 
+				print "Page disallowed in robots.txt %s"%(url)
+			return
+			
+		if(self.debug > 0): 
+			print "Now crawling: %s"%(url)
 		
 		url_list=[]
 		
-		for key in self.siteMap:		#When we cycle through the siteMap datastructure we convert to a url_list
-		 	url_list.append(key)		#Otherwise, the interpreter complains that dictionary is constantly changing 
+		#When we cycle through the siteMap datastructure we convert to a url_list
+		#Otherwise, the interpreter complains that dictionary is constantly changing
 		
-		for key in url_list:			#Fetch the URLs in the webpage and append to siteMap for URLs that have not yet been crawled. 
+		for key in self.siteMap:		
+		 	url_list.append(key)		 
+		
+		for key in url_list:	
+			#Fetch the URLs in the webpage and append to siteMap for URLs that have not yet been crawled. 		
 			if self.siteMap[key] == "":
 				urls =self.__extract_url(url)
 				self.siteMap[key] = urls
 
-				for url_key in urls:	#If the URL has already been crawled or has a # tag, dont crawl it.
+				for url_key in urls:
+					#If the URL has already been crawled or has a # tag, dont crawl it.	
 					if (self.debug > 1): 
 						print "url_key: %s, crawled: %s"%(url_key,self.crawled)
 					if url_key in self.crawled:
@@ -71,15 +88,16 @@ class WebCrawler():
 					if (self.debug > 1): 
 						print parsed.netloc
 					
-					if parsed.netloc.lower() in self.domains:		#If netloc is empty or is digitalocean.com then the page is part of local domain and needs to be crawled.    
+					#If netloc is empty or is the main domain then the page is part of local domain and needs to be crawled.
+					if parsed.netloc.lower() in self.domains:		    
 						
 						if (self.debug > 1): 
-							print "\nLevel=%s,URL=%s\n"%(self.level, url_key)
-						self.siteMap[url_key] = ""  #Add webpage to siteMap before crawling to allow it be crawled.
-						self.crawled.add(url_key)   #Update the crawled set to indicate that this website has been crawled ( will prevent us from being stuck in a loop)
-						self.level = self.level+1   #Increment depth count
+							print "\ndepth=%s,URL=%s\n"%(self.depth, url_key)
+						self.siteMap[url_key] = ""  
+						self.crawled.add(url_key)   
+						self.depth = self.depth+1   
 						self.__crawl_site(url_key)	
-						self.level = self.level-1	#Decrement depth count once the page and all its children have been crawled
+						self.depth = self.depth-1	
 			
 
 	def __print_siteMap(self):
@@ -124,7 +142,7 @@ class WebCrawler():
 		from urllister import URLLister
 		from sgmllib import SGMLParseError
 		
-		req = urllib2.Request(url, headers={'User-Agent' : "Tharak Krishnan's Browser"}) 
+		req = urllib2.Request(url, headers={'User-Agent' : self.useragent}) 
 		try:
 			usock = urllib2.urlopen(req)
 			parser = URLLister(url)
@@ -154,6 +172,6 @@ class WebCrawler():
 
 
 if __name__ == "__main__":
-	wc=WebCrawler(url="http://digitalocean.com", outdir="out",debug=1);
+	wc=WebCrawler(url="http://digitalocean.com", useragent = "Tharak Krishnan's Browser", outdir="out",debug=1);
 	wc.get_siteMap()
 	
